@@ -45,7 +45,10 @@ class Command(BaseCommand):
 
         if data['body'] is not None:
             data['body'] = json.dumps(data['body'], sort_keys=True, indent=4)
-            data['body'] = "\n".join(["    "+line for line in data['body'].split("\n")])[4:]
+            data['body'] = "\n".join(
+                [f"    {line}" for line in data['body'].split("\n")]
+            )[4:]
+
 
         if data['is_public']:
             template = Template("""curl -X {{method}} \\
@@ -82,7 +85,7 @@ class Command(BaseCommand):
         for (key, req) in reqs.items():
             print("Generate", key)
 
-            cmd_path = os.path.join("output", key + "-cmd.adoc")
+            cmd_path = os.path.join("output", f"{key}-cmd.adoc")
             os.makedirs("output", exist_ok=True)
             curl_cmd = self._build_curl_cmd(host, req)
             with open(cmd_path, "w") as fd:
@@ -94,13 +97,16 @@ class Command(BaseCommand):
             if req['method'] == "DELETE":
                 continue
 
-            curl_cmd = curl_cmd.replace("$$INCLUDE_FILE$$", "@{}/".format(os.path.dirname(__file__)))
+            curl_cmd = curl_cmd.replace(
+                "$$INCLUDE_FILE$$", f"@{os.path.dirname(__file__)}/"
+            )
 
-            output_path = os.path.join("output", key + "-output.adoc")
+
+            output_path = os.path.join("output", f"{key}-output.adoc")
             if "response" in req:
                 response_data = req['response']
             else:
-                result = subprocess.run(curl_cmd + " -f", shell=True, stdout=subprocess.PIPE)
+                result = subprocess.run(f"{curl_cmd} -f", shell=True, stdout=subprocess.PIPE)
 
                 if result.returncode != 0:
                     result = subprocess.run(curl_cmd, shell=True, stdout=subprocess.PIPE)
